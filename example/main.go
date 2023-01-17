@@ -7,88 +7,73 @@ import (
 )
 
 func main() {
-	MxExample()
-	RwMxExample()
+	TestMx()
+	TestRwMx()
 }
 
-func MxExample() {
-	// initialize x
-	var x int = 0
-	println(x)
+func TestMx() {
+	var (
+		x int                         // initialize x
+		m *gmx.Mx[int] = gmx.Wrap(&x) // initialize mx
+	)
 
-	// initialize mx
-	var m *gmx.Mx[*int] = gmx.Wrap(&x)
-	println(*m.Unwrap())
+	println(
+		"gmx.Mx  ",
+		incrMutexer(m, 1e6),  // with gmx.Do: 100000
+		incrPointer(&x, 1e6), // without gmx.Do: 93287
+	)
+}
 
-	// initialize wait group
-	var wg *sync.WaitGroup = &sync.WaitGroup{}
+func TestRwMx() {
+	var (
+		x int                             // initialize x
+		m *gmx.RwMx[int] = gmx.RwWrap(&x) // initialize rwmx
+	)
 
-	// initialize mutation op
-	var op gmx.Op[*int] = func(x *int) {
+	println(
+		"gmx.RwMx",
+		incrMutexer(m, 1e6),  // with rwmx.Do: 100000
+		incrPointer(&x, 1e6), // without rwmx.Do: 99939
+	)
+}
+
+func incrOp(wg *sync.WaitGroup) gmx.Op[int] {
+	return func(x *int) {
 		*x += 1
 		wg.Done()
 	}
-
-	// with gmx.Do: 100000
-	{
-		wg.Add(100000)
-		for i := 0; i < 100000; i++ {
-			go m.Do(op)
-		}
-		wg.Wait()
-
-		println(*m.Unwrap())
-	}
-
-	// without gmx.Do: 193287
-	{
-		wg.Add(100000)
-		for i := 0; i < 100000; i++ {
-			go op(&x)
-		}
-		wg.Wait()
-
-		println(*m.Unwrap())
-	}
 }
 
-func RwMxExample() {
-	// initialize x
-	var x int = 0
-	println(x)
+func incrMutexer(m gmx.Mutexer[int], n int) int {
+	var (
+		wg = &sync.WaitGroup{} // initialize wait group
+		op = incrOp(wg)        // initialize incr op
+	)
 
-	// initialize rwmx
-	var m *gmx.RwMx[*int] = gmx.RwWrap(&x)
-	println(*m.Unwrap())
+	wg.Add(n)
 
-	// initialize wait group
-	var wg *sync.WaitGroup = &sync.WaitGroup{}
-
-	// initialize mutation op
-	var op gmx.Op[*int] = func(x *int) {
-		*x += 1
-		wg.Done()
+	for i := 0; i < n; i++ {
+		go m.Do(op)
 	}
 
-	// with rwmx.Do: 100000
-	{
-		wg.Add(100000)
-		for i := 0; i < 100000; i++ {
-			go m.Do(op)
-		}
-		wg.Wait()
+	wg.Wait()
 
-		println(*m.Unwrap())
+	return m.Unwrap()
+}
+
+func incrPointer(x *int, n int) int {
+	var (
+		wg = &sync.WaitGroup{} // initialize wait group
+		op = incrOp(wg)        // initialize incr op
+	)
+
+	wg.Add(n)
+
+	for i := 0; i < n; i++ {
+		go op(x)
 	}
 
-	// without rwmx.Do: 193287
-	{
-		wg.Add(100000)
-		for i := 0; i < 100000; i++ {
-			go op(&x)
-		}
-		wg.Wait()
+	wg.Wait()
 
-		println(*m.Unwrap())
-	}
+	return *x
 }

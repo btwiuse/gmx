@@ -2,14 +2,16 @@ package gmx
 
 import "sync"
 
+var _ Mutexer[int] = (*RwMx[int])(nil)
+
 // Generic Read-Write Mutex container type
 type RwMx[T any] struct {
 	*sync.RWMutex
-	x T
+	x *T
 }
 
-// Wrap a value, usually a pointer, into [RwMx]
-func RwWrap[T any](x T) *RwMx[T] {
+// Wrap a pointer into [RwMx]
+func RwWrap[T any](x *T) *RwMx[T] {
 	return &RwMx[T]{
 		RWMutex: &sync.RWMutex{},
 		x:       x,
@@ -23,9 +25,9 @@ func (m *RwMx[T]) Do(op Op[T]) {
 	op(m.x)
 }
 
-// Unwrap wrapped value, usually a pointer
+// Unwrap returns value references by the wrapped pointer
 func (m *RwMx[T]) Unwrap() T {
 	m.RLock()
 	defer m.RUnlock()
-	return m.x
+	return *m.x
 }
