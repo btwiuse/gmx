@@ -19,7 +19,7 @@ func RwWrap[T any](x *T) *RwMx[T] {
 }
 
 // Do mutable operation on wrapped value guarded by sync.RWMutex
-func (m *RwMx[T]) Do(op Op[T]) {
+func (m *RwMx[T]) Do(op Mutation[T]) {
 	m.Lock()
 	defer m.Unlock()
 	op(m.x)

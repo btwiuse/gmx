@@ -37,7 +37,7 @@ func TestRwMx() {
 	)
 }
 
-func incrOp(wg *sync.WaitGroup) gmx.Op[int] {
+func incrOp(wg *sync.WaitGroup) gmx.Mutation[int] {
 	return func(x *int) {
 		*x += 1
 		wg.Done()

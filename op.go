@@ -1,4 +1,4 @@
 package gmx
 
-// Op represents mutable operation on a pointer
-type Op[T any] func(x *T)
+// Mutation represents mutable operation on a pointer
+type Mutation[T any] func(*T)
