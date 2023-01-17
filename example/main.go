@@ -11,40 +11,45 @@ func main() {
 	TestRwMx()
 }
 
+type state struct {
+	x int
+}
+
 func TestMx() {
 	var (
-		x int                         // initialize x
-		m *gmx.Mx[int] = gmx.Wrap(&x) // initialize mx
+		s *state         = &state{x: 0} // initialize state
+		m *gmx.Mx[state] = gmx.Wrap(s)  // initialize mx
 	)
 
 	println(
 		"gmx.Mx  ",
-		incrMutexer(m, 1e6),  // with gmx.Do: 100000
-		incrPointer(&x, 1e6), // without gmx.Do: 93287
+		batchIncrMutexer(m, 1e6).x, // with gmx.Do: 100000
+		batchIncrPointer(s, 1e6).x, // without gmx.Do: 93287
 	)
 }
 
 func TestRwMx() {
 	var (
-		x int                             // initialize x
-		m *gmx.RwMx[int] = gmx.RwWrap(&x) // initialize rwmx
+		s *state           = &state{x: 0}  // initialize state
+		m *gmx.RwMx[state] = gmx.RwWrap(s) // initialize rwmx
 	)
 
 	println(
 		"gmx.RwMx",
-		incrMutexer(m, 1e6),  // with rwmx.Do: 100000
-		incrPointer(&x, 1e6), // without rwmx.Do: 99939
+		batchIncrMutexer(m, 1e6).x, // with rwmx.Do: 100000
+		batchIncrPointer(s, 1e6).x, // without rwmx.Do: 99939
 	)
 }
 
-func incrOp(wg *sync.WaitGroup) gmx.Mutation[int] {
-	return func(x *int) {
-		*x += 1
+func incrOp(wg *sync.WaitGroup) gmx.Mutation[state] {
+	return func(s *state) {
+		s.x += 1
 		wg.Done()
 	}
 }
 
-func incrMutexer(m gmx.Mutexer[int], n int) int {
+// use Mutexer.Do to perform state mutation is safe
+func batchIncrMutexer(m gmx.Mutexer[state], n int) state {
 	var (
 		wg = &sync.WaitGroup{} // initialize wait group
 		op = incrOp(wg)        // initialize incr op
@@ -61,7 +66,8 @@ func incrMutexer(m gmx.Mutexer[int], n int) int {
 	return m.Unwrap()
 }
 
-func incrPointer(x *int, n int) int {
+// use pointer to perform state mutation is unsafe
+func batchIncrPointer(s *state, n int) state {
 	var (
 		wg = &sync.WaitGroup{} // initialize wait group
 		op = incrOp(wg)        // initialize incr op
@@ -70,10 +76,10 @@ func incrPointer(x *int, n int) int {
 	wg.Add(n)
 
 	for i := 0; i < n; i++ {
-		go op(x)
+		go op(s)
 	}
 
 	wg.Wait()
 
-	return *x
+	return *s
 }
