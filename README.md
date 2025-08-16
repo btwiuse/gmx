@@ -15,15 +15,15 @@ It uses new language features introduced since go1.18:
 
   - [Mx](https://pkg.go.dev/github.com/btwiuse/gmx#Mx)
 
-    - [Do](https://pkg.go.dev/github.com/btwiuse/gmx#Mx.Do)
+    - [Mut](https://pkg.go.dev/github.com/btwiuse/gmx#Mx.Mut)
 
-    - [Unwrap](https://pkg.go.dev/github.com/btwiuse/gmx#Mx.Unwrap)
+    - [Get](https://pkg.go.dev/github.com/btwiuse/gmx#Mx.Get)
 
   - [RwMx](https://pkg.go.dev/github.com/btwiuse/gmx#RwMx)
 
-    - [Do](https://pkg.go.dev/github.com/btwiuse/gmx#RwMx.Do)
+    - [Mut](https://pkg.go.dev/github.com/btwiuse/gmx#RwMx.Mut)
 
-    - [Unwrap](https://pkg.go.dev/github.com/btwiuse/gmx#RwMx.Unwrap)
+    - [Get](https://pkg.go.dev/github.com/btwiuse/gmx#RwMx.Get)
 
   - [Mutation](https://pkg.go.dev/github.com/btwiuse/gmx#Mutation)
 

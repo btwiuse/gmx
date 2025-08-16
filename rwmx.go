@@ -18,15 +18,15 @@ func RwWrap[T any](x *T) *RwMx[T] {
 	}
 }
 
-// Do mutable operation on wrapped value guarded by sync.RWMutex
-func (m *RwMx[T]) Do(op Mutation[T]) {
+// Mutate wrapped value guarded by sync.RWMutex
+func (m *RwMx[T]) Mut(op Mutation[T]) {
 	m.Lock()
 	defer m.Unlock()
 	op(m.x)
 }
 
-// Unwrap returns value references by the wrapped pointer
-func (m *RwMx[T]) Unwrap() T {
+// Get value referenced by the wrapped pointer
+func (m *RwMx[T]) Get() T {
 	m.RLock()
 	defer m.RUnlock()
 	return *m.x
